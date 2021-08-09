@@ -36,7 +36,7 @@ namespace WebApiAutores.Controllers
             return await this.dbContext.Autores.ToListAsync();
         }
 
-        [HttpGet("{id: int}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<Autor>> Get(int id)
         {
             var autor = await this.dbContext.Autores.FirstOrDefaultAsync((autor) => autor.Id == id);
@@ -46,8 +46,8 @@ namespace WebApiAutores.Controllers
         } 
         
         //byDefault nombre tiene el valor de persona
-        [HttpGet("{id: int}/{nombre=persona}")]
-        public async Task<ActionResult<Autor>> Get(int id, string nombre)
+        [HttpGet("{id:int}/{nombre=persona}")]
+        public async Task<ActionResult<Autor>> Get(int id, string nombre, [FromHeader] string rol, [FromQuery] string queryStringParametro)
         {
             var autor = await this.dbContext.Autores.FirstOrDefaultAsync((autor) => autor.Id == id && autor.Nombre.Contains(nombre));
             // Ok() es un actionResult pero no sabe que objeto retornar, es generico
@@ -56,8 +56,14 @@ namespace WebApiAutores.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post(Autor autor)
+        public async Task<ActionResult> Post([FromBody] Autor autor)
         {
+            // validate desde el controlador
+            var nameExisted = await dbContext.Autores.AnyAsync(dbAutor => dbAutor.Nombre == autor.Nombre);
+            if(nameExisted)
+            {
+                return BadRequest($"Ya existe un autor con el nombre {autor.Nombre}");
+            }
             this.dbContext.Add(autor);
             await this.dbContext.SaveChangesAsync();
             return Ok();
